@@ -23,8 +23,9 @@ inline Array <T>::Array(T data[], int length) : length_(length)
     try
     {
         test_length (length);
-        data_ = allocate_memory (length);
-        copy_array (data, length);
+        data_ = copy_array(data, length);
+        //data_ = allocate_memory (length);
+        //copy_array (data, length);
     }
     catch (const std::exception& ex)
     {
@@ -45,19 +46,60 @@ inline Array <T>::~Array ()
 }
 
 template<typename T>
-inline Array <T>::Array(Array <T>& other_arr)
+inline Array <T>::Array(const Array <T>& other_arr)
 {
-    try
+    if (other_arr.data_ == nullptr)
     {
-        test_ptr (other_arr.data_);
-        data_ = allocate_memory (other_arr.get_length());    
-        length_ = other_arr.get_length();
-        copy_array (other_arr.data_, other_arr.length_);
+        return;
     }
-    catch (const std::exception& ex)
+    else
     {
-        std::cerr << ex.what() << '\n';
-    }    
+        //test_ptr (other_arr.data_);
+        //data_ = allocate_memory (other_arr.length_);    
+        length_ = other_arr.length_;
+        data_ = copy_array (other_arr.data_, other_arr.length_);
+        //copy_array (other_arr.data_, other_arr.length_);
+    }       
+}
+
+template <typename T>
+Array<T>& Array<T>::operator= (const Array<T>& other_arr)
+{
+    if (other_arr.data_ == nullptr)
+    {
+        return *this;
+    }
+    else if (other_arr.data_ == data_)
+    {
+        return *this;
+    }
+    else
+    {
+        //test_ptr (other_arr.data_);
+        //test_length(other_arr.length_);
+        length_ = other_arr.length_;
+        data_ = copy_array (other_arr.data_, other_arr.length_);
+        return *this;
+    }
+}
+
+template <typename T>
+inline Array<T>::Array (Array <T>&& other_arr) noexcept
+{
+    length_ = other_arr.length_;
+    data_ = other_arr.data_;
+    other_arr.length_ = 0;
+    other_arr.data_ = nullptr;
+}
+
+template <typename T>
+Array<T>& Array<T>::operator= (Array<T>&& other_arr) noexcept
+{            
+        length_ = other_arr.length_;
+        data_ = other_arr.data_;
+        other_arr.length_ = 0;
+        other_arr.data_ = nullptr;
+        return *this;      
 }
 
 template<typename T>
@@ -70,89 +112,54 @@ inline T Array <T>::at(int index)
     }
     catch(const std::exception& ex)
     {
-        std::cerr << ex.what() << '\n';
+        std::cerr << ex.what() << "\n";
     }  
 }
 
 template<typename T>
-inline void Array<T>::copy_array(const T * other_data, const int & other_length)
+inline T* Array<T>::copy_array(const T * other_data, const int & other_length)
 {
-    try
+    T *new_data = allocate_memory(other_length);
+    for (int i = 0; i < other_length; ++i)
     {
-        test_ptr (data_);
-        test_ptr (other_data);
-        test_length (other_length);
-        for (int i = 0; i < other_length; ++i)
-        {
-            data_[i] = other_data[i];
-        }
+        new_data[i] = other_data[i];
     }
-    catch(const std::exception& ex)
-    {
-        std::cerr << ex.what() << '\n';
-    }  
+    return new_data;
 }
 
 template<typename T>
-inline void Array<T>::copy_array(T * data, const T * other_data, const int & other_length)
+void Array<T>::print_arr() noexcept
 {
-    try
-    {
-        test_ptr(data);
-        test_ptr(other_data);
-        test_length(other_length);
-        for (int i = 0; i < other_length; ++i)
-        {
-            data[i] = other_data[i];
-        }
-    }
-    catch(const std::exception& ex)
-    {
-        std::cerr << ex.what() << '\n';
-    }  
-}
-
-template<typename T>
-void Array<T>::print_arr()
-{
-    try
-    {
-        test_ptr(data_);
+    if (data_ != nullptr)
+    {       
         for (int i = 0; i < length_; ++i)
             std::cout << data_[i] << "\t";
         std::cout << "\n";
-    }
-    catch(const std::exception& ex)
-    {
-        std::cerr << ex.what() << '\n';
-    }    
+    }        
 }
 
 template<typename T>
 void Array<T>::push_back(const T &data)
-{
-    try
-    {        
-        test_ptr(data_);
-        T* new_data = allocate_memory (length_+1);
-        copy_array (new_data, data_, length_);
-        new_data[length_] = data;
-        length_++;
-        delete [] data_;
-        data_ = new_data;    
-    }
-    catch(const std::exception& ex)
+{    
+    T *new_data = allocate_memory(length_ + 1);
+    for (int i = 0; i < length_; ++i)
     {
-        std::cerr << ex.what() << '\n';
+        new_data[i] = data_[i];
+    }
+    // T* new_data = allocate_memory (length_+1);
+    // copy_array (new_data, data_, length_);
+    new_data[length_] = data;
+    length_++;
+    if (data_ != nullptr)
+    {
+        delete[] data_;
     }    
+    data_ = new_data;
 }
 
 template<typename T>
 void Array<T>::push_front(const T &data)
-{
-    try
-    {
-        test_ptr (data_);
+{            
         T *new_data = allocate_memory(length_ + 1);
         new_data[0] = data;
         for (int i = 1; i < length_ + 1; ++i)
@@ -160,119 +167,122 @@ void Array<T>::push_front(const T &data)
             new_data[i] = data_[i - 1];
         }
         length_++;
+        if (data_ != nullptr)
+        {
+            delete[] data_;
+        }        
+        data_ = new_data;        
+}
+
+template <typename T>
+void Array<T>::pop_back()
+{
+    if (length_ == 0)
+    {
+        return;
+    }
+    else if (length_ == 1)
+    {
+        clear();
+    }
+    else
+    {
+        T *new_data = copy_array(data_, length_ - 1);
+        // T *new_data = allocate_memory(length_ - 1);
+        // copy_array(new_data, data_, length_ - 1);
+        length_--;
         delete[] data_;
         data_ = new_data;
     }
-    catch(const std::exception& ex)
-    {
-        std::cerr << ex.what() << '\n';
-    }     
-}
-
-template<typename T>
-void Array<T>::pop_back()
-{
-    try
-    {
-        test_ptr (data_);
-        if (length_ == 0)
-        {
-            return;
-        }
-        else if (length_ == 1)
-        {
-            clear();
-        }
-        else 
-        {
-            T *new_data = allocate_memory(length_ - 1);
-            copy_array(new_data, data_, length_ - 1);
-            length_--;
-            delete[] data_;
-            data_ = new_data;
-        }
-    }
-    catch(const std::exception& ex)
-    {
-        std::cerr << ex.what() << '\n';
-    }    
 }
 
 template<typename T>
 void Array<T>::pop_front()
 {
-    try
+    if (length_ == 0)
     {
-        test_ptr (data_);
-        if (length_ == 0)
-        {
-            return;
-        }
-        else if (length_ == 1)
-        {
-            clear();
-        }
-        else 
-        {
-            T *new_data = allocate_memory(length_ - 1);
-            for (int i = 0; i < length_ - 1; ++i)
+        return;
+    }
+    else if (length_ == 1)
+    {
+        clear();
+    }
+    else 
+    {
+        T *new_data = allocate_memory(length_ - 1);
+        for (int i = 0; i < length_ - 1; ++i)
             {
                 new_data[i] = data_[i + 1];
             }
-            length_--;
-            delete[] data_;
-            data_ = new_data;
-        }
+        length_--;
+        delete[] data_;
+        data_ = new_data;
     }
-    catch(const std::exception& ex)
-    {
-        std::cerr << ex.what() << '\n';
-    } 
-}
+}    
 
 template<typename T>
 void Array<T>::insert(const T &data, const int index)
-{
-    try
+{   
+    if (index < 0)
+        return;
+    if (index == length_)
     {
-        test_ptr (data_);
-        if (index == length_)
+        push_back(data);
+    }
+    else if (index == 1)
+    {
+        push_front(data);
+    }
+    else
+    {
+        T *new_data = nullptr;           
+        new_data = index < length_ ? allocate_memory(length_ + 1) 
+                                    : allocate_memory(index);
+        new_data[index - 1] = data;           
+            
+        if (index < length_)
         {
-            push_back(data);
+            for (int i = 0; i < index - 1; ++i)
+            {
+                new_data[i] = data_[i];
+            }                
+            for (int i = index; i < length_ + 1; ++i)
+            {
+                new_data[i] = data_[i - 1];
+            }
+            length_++;
         }
-        else if (index == 1)
+        else if (index > length_)
         {
-            push_front(data);
+            for (int i = 0; i < length_; ++i)
+            {
+                new_data[i] = data_[i];
+            }
+            length_ = index;
+        }         
+        delete[] data_;
+        data_ = new_data;
+    }     
+}
+
+template<typename T>
+void Array<T>::replace(const T &data, const int index)
+{       
+    if (index < 0)
+    {
+        return;
+    }
+    if (data_ != nullptr)
+    {
+        if (index > length_)
+        {
+            insert (data, index);
         }
         else
         {
-            T *new_data = nullptr;
-            if (index < length_)
-            {
-                new_data = allocate_memory(length_ + 1);
-                copy_array(new_data, data_, index);
-                new_data[index - 1] = data;
-                for (int i = index; i < length_ + 1; ++i)
-                {
-                    new_data[i] = data_[i - 1];
-                }
-                length_++;
-            }
-            else if (index > length_)
-            {
-                new_data = allocate_memory(index);
-                copy_array(new_data, data_, length_);
-                new_data[index - 1] = data;
-                length_ = index;
-            }
-            delete[] data_;
-            data_ = new_data;
+            data_[index - 1] = data; 
         }
     }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }    
 }
 
 template<typename T>
@@ -293,13 +303,18 @@ T* Array<T>::allocate_memory(const int new_length)
 {
     try
     {
+        test_length(new_length);
         return new T [new_length]{};
     }
     catch (const std::bad_alloc &ex)
     {
         data_ = nullptr;
         std::cout << "Allocation failed: " << ex.what() << '\n';
-    }    
+    }
+    catch(const std::exception& ex)
+    {
+        std::cerr << ex.what() << '\n';
+    }  
 }
 
 template<typename T>
@@ -311,6 +326,7 @@ void Array<T>::test_length(const int length)
     }
 }
 
+/*
 template<typename T>
 void Array<T>::test_ptr (const T* data)
 {
@@ -319,6 +335,7 @@ void Array<T>::test_ptr (const T* data)
         throw MyException("IntArray called on nullptr", ERROR_NULLPTR);
     }
 }
+*/
 
 template<typename T>
 void Array<T>::test_range(const int index)
