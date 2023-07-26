@@ -1,2 +1,1 @@
 #define ERROR_LENGTH_TOO_SMALL -1
-#define ERROR_NULLPTR -2

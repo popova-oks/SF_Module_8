@@ -6,7 +6,6 @@ template <typename T>
 class Array
 {   
     public:
-        //Array () = default;
         Array (int length);
         Array (T data[] = nullptr, int length = 0);
         Array (const Array <T>& other_arr);

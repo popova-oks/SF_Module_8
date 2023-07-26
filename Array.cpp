@@ -24,14 +24,11 @@ inline Array <T>::Array(T data[], int length) : length_(length)
     {
         test_length (length);
         data_ = copy_array(data, length);
-        //data_ = allocate_memory (length);
-        //copy_array (data, length);
     }
     catch (const std::exception& ex)
     {
         std::cerr << ex.what() << '\n';
-    }
-    
+    }    
 }
 
 template <typename T>
@@ -53,12 +50,9 @@ inline Array <T>::Array(const Array <T>& other_arr)
         return;
     }
     else
-    {
-        //test_ptr (other_arr.data_);
-        //data_ = allocate_memory (other_arr.length_);    
+    {         
         length_ = other_arr.length_;
         data_ = copy_array (other_arr.data_, other_arr.length_);
-        //copy_array (other_arr.data_, other_arr.length_);
     }       
 }
 
@@ -74,9 +68,7 @@ Array<T>& Array<T>::operator= (const Array<T>& other_arr)
         return *this;
     }
     else
-    {
-        //test_ptr (other_arr.data_);
-        //test_length(other_arr.length_);
+    {       
         length_ = other_arr.length_;
         data_ = copy_array (other_arr.data_, other_arr.length_);
         return *this;
@@ -95,6 +87,7 @@ inline Array<T>::Array (Array <T>&& other_arr) noexcept
 template <typename T>
 Array<T>& Array<T>::operator= (Array<T>&& other_arr) noexcept
 {            
+        clear();
         length_ = other_arr.length_;
         data_ = other_arr.data_;
         other_arr.length_ = 0;
@@ -145,9 +138,7 @@ void Array<T>::push_back(const T &data)
     for (int i = 0; i < length_; ++i)
     {
         new_data[i] = data_[i];
-    }
-    // T* new_data = allocate_memory (length_+1);
-    // copy_array (new_data, data_, length_);
+    }    
     new_data[length_] = data;
     length_++;
     if (data_ != nullptr)
@@ -187,9 +178,7 @@ void Array<T>::pop_back()
     }
     else
     {
-        T *new_data = copy_array(data_, length_ - 1);
-        // T *new_data = allocate_memory(length_ - 1);
-        // copy_array(new_data, data_, length_ - 1);
+        T *new_data = copy_array(data_, length_ - 1);        
         length_--;
         delete[] data_;
         data_ = new_data;
@@ -325,17 +314,6 @@ void Array<T>::test_length(const int length)
         throw MyException("IntArray length must be positive", ERROR_LENGTH_TOO_SMALL);
     }
 }
-
-/*
-template<typename T>
-void Array<T>::test_ptr (const T* data)
-{
-    if (data == nullptr)
-    {
-        throw MyException("IntArray called on nullptr", ERROR_NULLPTR);
-    }
-}
-*/
 
 template<typename T>
 void Array<T>::test_range(const int index)
